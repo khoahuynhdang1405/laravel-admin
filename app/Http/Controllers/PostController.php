@@ -3,27 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePostRequest;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         $posts = DB::table('posts')->get();
         return view('posts.index', compact('posts'));
     }
 
-    public function create(){
+    public function create()
+    {
         return view('posts.create');
     }
 
     public function store(StorePostRequest $request)
     {
         // Xử lý lưu file
-        if($request->hasFile('thumbnail')){
+        if ($request->hasFile('thumbnail')) {
             $file = $request->file('thumbnail');
             $fileName = time() . '-' . $file->getClientOriginalName();
-            $path = $file->storeAs('images', $fileName);//lưu file hình ảnh
+            $path = $file->storeAs('images', $fileName); //lưu file hình ảnh
         }
 
         DB::table('posts')->insert([
@@ -31,7 +35,7 @@ class PostController extends Controller
             'content' => $request->get('content'),
             'created_at' => now(),
             'updated_at' => now(),
-            'thumbnail' => $path
+            'thumbnail' => $path,
         ]);
         return redirect()->route('posts.index')->with('message', 'Create new post successfully!');
     }
@@ -40,7 +44,7 @@ class PostController extends Controller
     {
         $post = DB::table('posts')->where('id', $id)->first();
 
-        if(!$post){
+        if (!$post) {
             abort(404);
         }
         return view('posts.edit', compact('post'));
@@ -48,17 +52,40 @@ class PostController extends Controller
 
     public function update(StorePostRequest $request, $id)
     {
-        DB::table('posts')->where('id', $id)->update([
+        $post = Post::findOrfail($id);
+
+        $path = $post->thumbnail;
+
+        if ($request->hasFile('thumbnail')) {
+            if ($post->thumbnail && Storage::exists($post->thumbnail)) {
+                Storage::delete($post->thumbnail);
+            }
+
+            $file = $request->file('thumbnail');
+            $fileName = time() . '-' . $file->getClientOriginalName();
+            $path = $file->storeAs('images', $fileName);
+        }
+        // DB::table('posts')->where('id', $id)->update([
+        //     'title' => $request->get('title'),
+        //     'content' => $request->get('content'),
+        //     'created_at' => now(),
+        // ]);
+
+        $post->update([
             'title' => $request->get('title'),
             'content' => $request->get('content'),
-            'created_at' => now(),
+            'thumbnail' => $path,
         ]);
         return redirect()->route('posts.index')->with('message', 'Edit post successfully!');
     }
 
     public function destroy($id)
     {
-        DB::table('posts')->where('id', $id)->delete();
+        $post = Post::findOrFail($id);
+
+        $post->delete();
+
+        Storage::delete($post->thumbnail);
 
         return back()->with('message', 'Delete post successfully!');
     }

@@ -5,16 +5,16 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\AuthController;
 use App\Models\Category;
 
-Route::get('/', [HomeController::class, 'index']);
+Route::middleware('auth')->get('/', [HomeController::class, 'index']);
 
-Route::get('/about',[HomeController::class, 'about']);
+Route::get('/about', [HomeController::class, 'about']);
 
 // Route::get('user/{name}', function (string $name = 'khoa') {
 //     return "Name: {$name}";
 // });
-
 // Route::prefix('/products')->group(function () {
 //     Route::get('/', function() {s
 //         return 'Products';
@@ -36,14 +36,14 @@ Route::get('/about',[HomeController::class, 'about']);
 // Route::get('/about', [HomeController::class, 'about']);
 
 
-Route::prefix('users')->controller(UserController::class)->name('users.')->group(function(){
+Route::prefix('users')->controller(UserController::class)->name('users.')->group(function () {
 
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
     Route::post('/store', 'store')->name('store');
 });
 
-Route::prefix('posts')->controller(PostController::class)->name('posts.')->group(function(){
+Route::middleware('auth')->prefix('posts')->controller(PostController::class)->name('posts.')->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
     Route::post('/store', 'store')->name('store');
@@ -52,7 +52,7 @@ Route::prefix('posts')->controller(PostController::class)->name('posts.')->group
     Route::get('/{id}/destroy', 'destroy')->name('destroy');
 });
 
-Route::prefix('categories')->controller(CategoryController::class)->name('categories.')->group(function(){
+Route::prefix('categories')->controller(CategoryController::class)->name('categories.')->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
     Route::post('/', 'store')->name('store');
@@ -61,3 +61,12 @@ Route::prefix('categories')->controller(CategoryController::class)->name('catego
     Route::put('/{id}', 'update')->name('update');
     Route::get('/{id}/destroy', 'destroy')->name('destroy');
 });
+
+Route::get('register', [AuthController::class, 'register'])->name('register');
+Route::post('register', [AuthController::class, 'postRegister'])->name('postRegister');
+
+Route::get('login', [AuthController::class, 'login'])->name('login');
+Route::post('login', [AuthController::class, 'postLogin'])->name('postLogin');
+
+Route::get('logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('logout', [AuthController::class, 'postLogout'])->name('postLogout');
