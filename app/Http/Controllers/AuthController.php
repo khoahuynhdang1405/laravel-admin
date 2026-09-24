@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -18,11 +21,19 @@ class AuthController extends Controller
 
     public function postRegister(RegisterRequest $request)
     {
-        User::create([
+        $user = User::create([
             'name' => $request->get('name'),
             'email' => $request->get('email'),
             'password' => Hash::make($request->get('password')),
         ]);
+
+        try {
+            Mail::to($user->email)->queue(new WelcomeMail($user));
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
+
+
         return back()->with('message', 'Register successfully!');
     }
 
