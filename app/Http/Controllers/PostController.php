@@ -6,6 +6,7 @@ use App\Http\Requests\StorePostRequest;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
@@ -23,6 +24,7 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request)
     {
+        $path = null;
         // Xử lý lưu file
         if ($request->hasFile('thumbnail')) {
             $file = $request->file('thumbnail');
@@ -30,13 +32,18 @@ class PostController extends Controller
             $path = $file->storeAs('images', $fileName); //lưu file hình ảnh
         }
 
-        DB::table('posts')->insert([
+        $newPost = Post::create([
             'title' => $request->get('title'),
             'content' => $request->get('content'),
             'created_at' => now(),
             'updated_at' => now(),
             'thumbnail' => $path,
         ]);
+        Log::info('Create new post succesfully!', [
+            'id' => $newPost->id,
+
+        ]);
+
         return redirect()->route('posts.index')->with('message', 'Create new post successfully!');
     }
 
